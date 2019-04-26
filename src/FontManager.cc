@@ -12,6 +12,7 @@ ResultSet *getAvailableFonts();
 ResultSet *findFonts(FontDescriptor *);
 FontDescriptor *findFont(FontDescriptor *);
 FontDescriptor *substituteFont(char *, char *);
+FontDescriptor *installFont(char*);
 
 // converts a ResultSet to a JavaScript array
 Local<Array> collectResults(ResultSet *results) {
@@ -210,6 +211,32 @@ NAN_METHOD(substituteFont) {
   }
 }
 
+void installFontAsync(uv_work_t *work) {
+  AsyncRequest *req = (AsyncRequest *) work->data;
+  req->result = installFont(req->postscriptName);
+}
+
+template<bool async>
+NAN_METHOD(installFont) {
+  if (info.Length() < 1 || !info[0]->IsString())
+    return Nan::ThrowTypeError("Expected font file name");
+
+  Nan::Utf8String fileName(info[0]);
+  if (async) {
+    if (info.Length() < 2 || !info[1]->IsFunction())
+      return Nan::ThrowTypeError("Expected a callback");
+
+    char *ps = new char[fileName.length() + 1];
+    strcpy(ps, *fileName);
+
+    AsyncRequest *req = new AsyncRequest(info[1]);
+    req->postscriptName = ps;
+    uv_queue_work(uv_default_loop(), &req->work, installFontAsync, (uv_after_work_cb) asyncCallback);
+  } else {
+    info.GetReturnValue().Set(wrapResult(installFont(*fileName)));
+  }
+}
+
 NAN_MODULE_INIT(Init) {
   Nan::Export(target, "getAvailableFonts", getAvailableFonts<true>);
   Nan::Export(target, "getAvailableFontsSync", getAvailableFonts<false>);
@@ -219,6 +246,8 @@ NAN_MODULE_INIT(Init) {
   Nan::Export(target, "findFontSync", findFont<false>);
   Nan::Export(target, "substituteFont", substituteFont<true>);
   Nan::Export(target, "substituteFontSync", substituteFont<false>);
+  Nan::Export(target, "installFont", installFont<true>);
+  Nan::Export(target, "installFontSync", installFont<false>);
 }
 
 NODE_MODULE(fontmanager, Init)

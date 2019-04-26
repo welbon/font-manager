@@ -483,3 +483,10 @@ FontDescriptor *substituteFont(char *postscriptName, char *string) {
 
   return res;
 }
+
+FontDescriptor* installFont(char* filePath) {
+  WCHAR* wcharPath = utf8ToUtf16(filePath);
+  int res = AddFontResourceW(wcharPath);
+  printf("===== res: %d, filePath: %s lasterror: %d\n", res, filePath, GetLastError());
+  return NULL;
+}
