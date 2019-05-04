@@ -493,7 +493,7 @@ FontDescriptor* installFont(char* filePath) {
 
 FontDescriptor* removeFont(char* inName) {
   WCHAR* fontName = utf8ToUtf16(inName);
-  int res = DeleteFontResourceW(fontName);
-  printf("[c++] deleteFont res: %d, fontName: %s lasterror: %d\n", res, fontName, GetLastError());
+  int res = RemoveFontResourceW(fontName);
+  printf("[c++] deleteFont res: %d, fontName: %s lasterror: %d\n", res, inName, GetLastError());
   return NULL;
 }

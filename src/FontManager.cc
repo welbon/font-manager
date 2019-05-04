@@ -13,7 +13,7 @@ ResultSet *findFonts(FontDescriptor *);
 FontDescriptor *findFont(FontDescriptor *);
 FontDescriptor *substituteFont(char *, char *);
 FontDescriptor *installFont(char*);
-FontDescriptor *removeFont(char* filePath) {
+FontDescriptor* removeFont(char* filePath);
 
 // converts a ResultSet to a JavaScript array
 Local<Array> collectResults(ResultSet *results) {
@@ -264,7 +264,7 @@ NAN_METHOD(removeFont) {
     req->postscriptName = ps;
     uv_queue_work(uv_default_loop(), &req->work, removeFontSync, (uv_after_work_cb) asyncCallback);
   } else {
-    info.GetReturnValue().Set(wrapResult(installFont(*fileName)));
+    info.GetReturnValue().Set(wrapResult(removeFont(*fileName)));
   }
 }
 
@@ -280,7 +280,7 @@ NAN_MODULE_INIT(Init) {
   Nan::Export(target, "installFont", installFont<true>);
   Nan::Export(target, "installFontSync", installFont<false>);
   Nan::Export(target, "removeFont", removeFont<true>);
-  Nan::Export(target, "removeFontSync", removeFontSync<false>);
+  Nan::Export(target, "removeFontSync", removeFont<false>);
 }
 
 NODE_MODULE(fontmanager, Init)
