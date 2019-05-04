@@ -582,6 +582,7 @@ describe('font-manager', function() {
     it.only('Test install font on windows platform', function() {
       //fontManager.installFontSync('C:\\Users\\翁立波\\Desktop\\font-test\\font20764\\Digitalt.ttf');
       fontManager.installFontSync('C:\\Users\\翁立波\\Desktop\\font-test\\font20768\\font20761\\adam_gorry_lights.otf');
+      fontManager.removeFontSync('adam_gorry_lights');
     });
   });
 });

@@ -13,6 +13,7 @@ ResultSet *findFonts(FontDescriptor *);
 FontDescriptor *findFont(FontDescriptor *);
 FontDescriptor *substituteFont(char *, char *);
 FontDescriptor *installFont(char*);
+FontDescriptor *removeFont(char* filePath) {
 
 // converts a ResultSet to a JavaScript array
 Local<Array> collectResults(ResultSet *results) {
@@ -49,6 +50,7 @@ struct AsyncRequest {
   FontDescriptor *result;   // for functions with a single result
   ResultSet *results;       // for functions with multiple results
   Nan::Callback *callback;  // the actual JS callback to call when we are done
+
 
   AsyncRequest(Local<Value> v) {
     work.data = (void *)this;
@@ -211,6 +213,9 @@ NAN_METHOD(substituteFont) {
   }
 }
 
+// ===================================================================//
+// Font install and remove
+
 void installFontAsync(uv_work_t *work) {
   AsyncRequest *req = (AsyncRequest *) work->data;
   req->result = installFont(req->postscriptName);
@@ -237,6 +242,32 @@ NAN_METHOD(installFont) {
   }
 }
 
+void removeFontSync(uv_work_t *work) {
+  AsyncRequest *req = (AsyncRequest *) work->data;
+  req->result = removeFont(req->postscriptName);
+}
+
+template<bool async>
+NAN_METHOD(removeFont) {
+  if (info.Length() < 1 || !info[0]->IsString())
+    return Nan::ThrowTypeError("Expected font file name");
+
+  Nan::Utf8String fileName(info[0]);
+  if (async) {
+    if (info.Length() < 2 || !info[1]->IsFunction())
+      return Nan::ThrowTypeError("Expected a callback");
+
+    char *ps = new char[fileName.length() + 1];
+    strcpy(ps, *fileName);
+
+    AsyncRequest *req = new AsyncRequest(info[1]);
+    req->postscriptName = ps;
+    uv_queue_work(uv_default_loop(), &req->work, removeFontSync, (uv_after_work_cb) asyncCallback);
+  } else {
+    info.GetReturnValue().Set(wrapResult(installFont(*fileName)));
+  }
+}
+
 NAN_MODULE_INIT(Init) {
   Nan::Export(target, "getAvailableFonts", getAvailableFonts<true>);
   Nan::Export(target, "getAvailableFontsSync", getAvailableFonts<false>);
@@ -248,6 +279,8 @@ NAN_MODULE_INIT(Init) {
   Nan::Export(target, "substituteFontSync", substituteFont<false>);
   Nan::Export(target, "installFont", installFont<true>);
   Nan::Export(target, "installFontSync", installFont<false>);
+  Nan::Export(target, "removeFont", removeFont<true>);
+  Nan::Export(target, "removeFontSync", removeFontSync<false>);
 }
 
 NODE_MODULE(fontmanager, Init)

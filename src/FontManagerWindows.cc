@@ -487,6 +487,13 @@ FontDescriptor *substituteFont(char *postscriptName, char *string) {
 FontDescriptor* installFont(char* filePath) {
   WCHAR* wcharPath = utf8ToUtf16(filePath);
   int res = AddFontResourceW(wcharPath);
-  printf("===== res: %d, filePath: %s lasterror: %d\n", res, filePath, GetLastError());
+  printf("[c++] installFont res: %d, filePath: %s lasterror: %d\n", res, filePath, GetLastError());
+  return NULL;
+}
+
+FontDescriptor* removeFont(char* inName) {
+  WCHAR* fontName = utf8ToUtf16(inName);
+  int res = DeleteFontResourceW(fontName);
+  printf("[c++] deleteFont res: %d, fontName: %s lasterror: %d\n", res, fontName, GetLastError());
   return NULL;
 }
